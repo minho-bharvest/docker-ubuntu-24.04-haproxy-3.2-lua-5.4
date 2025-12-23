@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # Required for keyless signing
+      attestations: write  # Required for build provenance attestation
+      artifact-metadata: write  # Required for Docker metadata action
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -52,6 +55,14 @@ jobs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+        attests: type=sbom
+
+    - name: Attest build provenance
+      uses: actions/attest-build-provenance@v3
+      with:
+        subject-name: docker.io/minhobharvest/docker-ubuntu-24.04-haproxy-3.2-lua-5.4
+        subject-digest: ${{ steps.build-and-push.outputs.digest }}
+        push-to-registry: true
 
     - name: Sign the images with GitHub OIDC Token
       env:
